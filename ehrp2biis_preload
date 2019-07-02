@@ -1,0 +1,71 @@
+#!/bin/ksh
+find /home/sa-biisint/bin/EHRP2BIIS -name "xyztemp" -exec rm -f {} \;
+umask 022
+
+#// Sets the file permissions for this session
+. /home/sa-biisint/bin/SETENV
+
+p_mailid='peter.chen@hhs.gov nathan.knight@hhs.gov marvin.simon@hhs.gov'
+#p_mailid='nathan.knight@hhs.gov'
+
+
+#######################################################
+HOME=/home/sa-biisint
+export HOME
+loin=`cat $HOME/.use`
+ps1=`cat $HOME/.pw`
+loin2=`cat $HOME/.use1`
+ps2=`cat $HOME/.pw1`
+homedir=/data/BIISINT/bin/EHRP2BIIS
+export homedir
+logdir="/home/sa-biisint/data/int/log"
+d=`date +%y%m%d%H%M%S`
+export d
+logfile="$logdir/ehrp2biis_preload_$d.log"
+INFA_HOME=/informatica/PowerCenter9.6.1 ; export INFA_HOME
+LD_LIBRARY_PATH=$INFA_HOME/server/bin ; export LD_LIBRARY_PATH
+PATH=$PATH:/informatica/PowerCenter9.6.1/server/bin/; export PATH
+
+########################################################
+
+# rm $logdir/step01_success
+# rm $logdir/step01_failure
+
+########################################################
+
+Load_proc()
+{
+echo '**************************************'
+v_status=`$ORACLE_HOME/bin/sqlplus -s '/nolog' <<EOB
+                connect $loin2/$ps2
+                spool  $logfile
+                show user
+                set serveroutput on size 1000000
+                @ $homedir/step01
+                spool off
+                EXIT;
+                <<EOB`
+}
+
+########################################################
+
+# Main Block
+#
+Load_proc
+echo $v_status >>  $logfile
+ERR_FLAG=`grep -i "ERROR"  $logfile`
+echo "$ERR_FLAG"
+if [ "$ERR_FLAG" != "" ]
+then
+    mailx -s "EHRP2BIIS Preload script did not complete successfully" $p_mailid   </dev/null
+#   touch $logdir/step01_failure
+else   
+#   mailx -s "EHRP2BIIS Preload script completed successfully" $p_mailid   </dev/null
+    echo "SQL Script Ran Successfully" >> $logfile
+#   /usr/bin/unix2dos -850 $logfile > /tmp/ehrp2biis_prerun_rpt.txt
+    /usr/bin/uuencode $logfile ehrp2biis_prerun_rpt.txt | mailx -s "EHRP2BIIS Preload script completed successfully"  $p_mailid
+#   rm /tmp/ehrp2biis_prerun_rpt.txt
+
+#	touch $logdir/step01_success
+	exit 0
+fi

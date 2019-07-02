@@ -1,0 +1,41 @@
+#!/bin/ksh
+#*************************************************************************/
+#* Script Name   : nih_cpm_transfer.sh			       	                 *
+#* Creation Date : 03/22/2012                                            *
+#* Created By    : Mariappan Muthiah                                     *
+#*                                                                       *
+#* Serial Number :                                                       * 
+#*                                                                       *
+#* Description   : Script to transfer NIH  file              	         *
+#*                 						         *
+#*                                                                       *
+#* Input Parms:   File Name                                              *
+#* Called By:     Manually;cron                                          *
+#*                                                                       *
+#*                                                                       *
+#* Modifications:                                                        *
+#* Who      Date                What Changed?                            * 
+#* -------- -------- --------------------------------------------------- *
+#*************************************************************************/
+echo "test1" > /tmp/test1
+#p_mailid='mariappan.muthiah@hhs.gov'
+p_mailid='mariappan.muthiah@hhs.gov nathan.knight@hhs.gov karen.williams@hhs.gov marvin.simon@hhs.gov Robin.Cunningham@hhs.gov minh.tran@hhs.gov'
+FNAME="/data/BIISINT/data/int/out/CPM/$1"
+echo $1 > /tmp/test2
+echo $FNAME  > /tmp/test3
+if [ ! -e $FNAME ] 
+then
+echo "No such file at $FNAME exiting..." |mailx -s "Aborting:File $FNAME not found!" $p_mailid
+exit
+else
+echo "Transfering file $FNAME to m1csv301.hhs.gov (sa-nihcpmusr2 account) on `date "+%m/%d/%Y"` at `date "+%T"` \t" |tee -a /tmp/nihcpm.out
+/usr/bin/sftp sa-cdirect@m1csv301.hhs.gov <<EOF
+cd /opt/app/jail/sa-nihbiisu/outbound
+put $FNAME
+quit
+EOF
+echo "Transfer to m1csv301 (Dropbox) is now completed on `date "+%m/%d/%Y"` at `date "+%T"` \t" |tee -a /tmp/nihcpm.out
+echo "\n" |tee -a /tmp/nihcpm.out
+cat /tmp/nihcpm.out|mailx -s "File $FNAME transfered to m1csv301 server sucessfully" $p_mailid
+rm /tmp/nihcpm.out
+fi

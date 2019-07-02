@@ -1,0 +1,31 @@
+#!/bin/ksh
+#*************************************************************************/
+#* Script Name   : remove_file.sh			       	          *
+#* Creation Date : 08/09/2016                                            *
+#* Created By    : Marvin Simon                                          *
+#*                                                                       *
+#* Serial Number :                                                       * 
+#*                                                                       *
+#* Description   : Script to remove file. Two parameters are the         *
+#*                 input directory and file name.                        *
+#*                                                                       *
+#* Input Parms:   File Name                                              *
+#* Called By:     Manually;cron                                          *
+#*                                                                       *
+#*                                                                       *
+#* Modifications:                                                        *
+#*                                                                       *
+#* -------- -------- --------------------------------------------------- *
+#*************************************************************************/
+
+inputdir=$1
+
+filename=$2
+
+cd $inputdir
+
+if [ -f $filename ]; then
+   
+   rm $filename 
+
+fi

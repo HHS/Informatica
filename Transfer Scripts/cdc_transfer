@@ -1,0 +1,43 @@
+#!/bin/ksh
+#*************************************************************************/
+#* Script Name   : cdc_transfer.sh			       	                 *
+#* Creation Date : 03/22/2012                                            *
+#* Created By    : Mariappan Muthiah                                     *
+#*                                                                       *
+#* Serial Number :                                                       * 
+#*                                                                       *
+#* Description   : Script to transfer NIH  file              	         *
+#*                 						         *
+#*                                                                       *
+#* Input Parms:   File Name                                              *
+#* Called By:     Manually;cron                                          *
+#*                                                                       *
+#*                                                                       *
+#* Modifications:                                                        *
+#* Who RMC   Date 08/11/2016 What Changed? Added robin.cunningham@hhs.gov* 
+#* -------- -------- --------------------------------------------------- *
+#*************************************************************************/
+#p_mailid='mariappan.muthiah@hhs.gov'
+p_mailid='mariappan.muthiah@hhs.gov nathan.knight@hhs.gov karen.williams@hhs.gov marvin.simon@hhs.gov robin.cunningham@hhs.gov minh.tran@hhs.gov'
+FNAME="/data/BIISINT/data/int/out/CPM/$1"
+if [[ -n "$1" ]] ; then
+if [ ! -e $FNAME ] 
+then
+echo "No such file at $FNAME exiting..."  |mailx -s "Aborting:File $FNAME not found!" $p_mailid
+exit
+else
+echo "Transfering file to m1csv301.hhs.gov (sa-cdcusr account) on `date "+%m/%d/%Y"` at `date "+%T"` \t" |tee -a /tmp/cdc.out
+/usr/bin/sftp sa-cdirect@m1csv301.hhs.gov <<EOF
+cd /opt/app/jail/sa-cdcusr/outbound
+put $FNAME
+quit
+EOF
+echo "Transfer to m1csv301 (Dropbox) is now completed on `date "+%m/%d/%Y"` at `date "+%T"` \t" |tee -a /tmp/cdc.out
+echo "\n" |tee -a /tmp/cdc.out
+cat /tmp/cdc.out|mailx -s "File $FNAME transfered to m1csv301 server sucessfully" $p_mailid
+rm /tmp/cdc.out
+fi
+else
+echo "Usage :cdc_transfer.sh <filename>"
+exit                    
+fi

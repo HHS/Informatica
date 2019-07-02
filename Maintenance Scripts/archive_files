@@ -1,0 +1,41 @@
+#!/bin/ksh
+#*************************************************************************/
+#* Script Name   : archive_files.sh			       	   *
+#* Creation Date : 08/09/2016                                            *
+#* Created By    : Marvin Simon                                          *
+#*                                                                       *
+#* Serial Number :                                                       * 
+#*                                                                       *
+#* Description   : Script to archive files. Three parameters are the     *
+#*                 input directory, file destination and pay period.     *
+#*                                                                       *
+#* Input Parms:   File Name                                              *
+#* Called By:     Manually;cron                                          *
+#*                                                                       *
+#*                                                                       *
+#* Modifications:                                                        *
+#*                                                                       *
+#* -------- -------- --------------------------------------------------- *
+#*************************************************************************/
+
+inputdir=$1
+
+filedest=$2
+
+pay_period=$3
+
+
+cd $inputdir
+
+for file in *
+do
+
+    fileprefix=$(basename $file .txt)
+
+    mv "${file}" "${filedest}"/"${fileprefix}"_P"${pay_period}".txt
+
+done
+
+
+
+

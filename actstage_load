@@ -1,0 +1,66 @@
+#!/bin/ksh
+find /home/sa-biisint/bin/EHRP2BIIS -name "xyztemp" -exec rm -f {} \;
+umask 022
+
+#// Sets the file permissions for this session
+. /home/sa-biisint/bin/SETENV
+
+p_mailid='peter.chen@hhs.gov nathan.knight@hhs.gov marvin.simon@hhs.gov'
+
+
+#######################################################
+HOME=/home/sa-biisint
+export HOME
+loin=`cat $HOME/.use`
+ps1=`cat $HOME/.pw`
+loin2=`cat $HOME/.use1`
+ps2=`cat $HOME/.pw1`
+homedir=/data/BIISINT/bin/EHRP2BIIS
+export homedir
+logdir="/home/sa-biisint/data/int/log"
+d=`date +%y%m%d%H%M%S`
+export d
+logfile="$logdir/action_stage_load.$d"
+INFA_HOME=/informatica/PowerCenter9.6.1 ; export INFA_HOME
+LD_LIBRARY_PATH=$INFA_HOME/server/bin ; export LD_LIBRARY_PATH
+PATH=$PATH:/informatica/PowerCenter9.6.1/server/bin/; export PATH
+
+########################################################
+
+# rm $logdir/step01_success
+# rm $logdir/step01_failure
+
+########################################################
+
+Load_proc()
+{
+echo '**************************************'
+v_status=`$ORACLE_HOME/bin/sqlplus -s '/nolog' <<EOB
+                connect $loin2/$ps2
+                spool  $logfile
+                show user
+                spool off
+                set serveroutput on size 1000000
+                @ $homedir/action_stage_load
+                EXIT;
+                <<EOB`
+}
+
+########################################################
+
+# Main Block
+#
+Load_proc
+echo $v_status >>  $logfile
+ERR_FLAG=`grep -c "SUCCESS!!!"  $logfile`
+echo "$ERR_FLAG"
+if [ "$ERR_FLAG" != "1" ]
+then
+	mailx -s "Action Staging Recordsload script did not complete successfully" $p_mailid   </dev/null
+#	touch $logdir/step01_failure
+else   
+        mailx -s "Action Staging Records load completed successfully" $p_mailid   </dev/null
+	echo "Action Staging Load SQL Script Ran Successfully" >> $logfile
+#	touch $logdir/step01_success
+	exit 0
+fi
